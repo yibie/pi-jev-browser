@@ -2,6 +2,8 @@
 
 An isolated Playwright Chromium browser for pi, driven by [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) — TypeSafe AI's System One model — called directly through the TypeSafe API, or by the model pi already has configured.
 
+> **Ported from Cline.** This package is a port of [`cline/plugins` → `plugins/jev-browser`](https://github.com/cline/plugins/tree/main/plugins/jev-browser) (v0.2.2, by Bee / Cline Bot Inc., Apache-2.0) to the pi extension API. The observation layer, decision loop, action executor, configuration, live stream, recording overlay, and browser setup are upstream code, largely unchanged. The host adapter, the direct TypeSafe transport in place of Vercel AI Gateway, and the `pi` decision policy are new. See [Porting notes](#porting-notes) for the full list.
+
 Jev does not see screenshots. The plugin hands it a structured DOM observation and one multiple-choice question per step, and Jev answers with a concrete operation plus a probability distribution over the offered options. That removes the screenshot round trip and the reasoning round trip from every browser step.
 
 **This is not a replacement for `agent_browser`.** It is the other trade: no login state, no extensions, no host environment, every step recorded with its probability, and a much cheaper fast loop. Use it for narrowly scoped goals on public pages. Use a profile-based browser tool when you need the user's session.
@@ -19,11 +21,18 @@ Each step offers the same enumerated choices — every concrete action compared 
 
 On the same goal, policy `typesafe` completed it in four executed steps (7.1 s) with both required values in the returned page text, and five consecutive direct API calls showed no throttling at all — the Gateway free tier in the same position stopped after five or six requests.
 
+## Related work
+
+[`pi-jev-browser`](https://github.com/laihenyi/pi-Jev-browser) (npm `pi-jev-browser`) is a sibling port of the same upstream plugin, and it is the more capable of the two: eight tools, including a deterministic extractor and a macOS accessibility-tree driver behind a surface-agnostic loop, plus stuck detection and a 22-scenario benchmark across local, model, live, and desktop tiers. It requires a TypeSafe API key to run at all.
+
+This package differs in two ways worth choosing it for: policy `pi` runs with no external credential, and the measurement above compares the decision layers instead of assuming one. If you want the broader tool surface, use the sibling.
+
 ## Install
 
 ```bash
-pi install /absolute/path/to/pi-jev-browser   # local checkout
-pi install npm:pi-jev-browser                 # once published
+pi install /absolute/path/to/pi-jev-browser        # local checkout
+pi install git:github.com/yibie/pi-jev-browser     # from git
+pi install npm:@yibie/pi-jev-browser               # from npm
 ```
 
 Chromium downloads on the first `jev_run` if Playwright's cache does not already have a matching build (up to ~2 minutes, network required). Nothing is downloaded at pi startup. On Linux the system browser libraries remain an administrator-managed prerequisite; this package does not run sudo.

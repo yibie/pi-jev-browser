@@ -1,5 +1,5 @@
 {
-  "name": "pi-jev-browser",
+  "name": "@yibie/pi-jev-browser",
   "version": "0.1.0",
   "description": "Isolated Playwright browser for pi, driven by Jev typed decisions through the TypeSafe API or the model pi already has configured.",
   "author": "yibie",
@@ -34,6 +34,9 @@
   "scripts": {
     "check": "tsc --noEmit",
     "test": "node --test --experimental-strip-types test/*.test.ts"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
