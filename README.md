@@ -35,7 +35,7 @@ pi install git:github.com/yibie/pi-jev-browser     # from git
 pi install npm:@yibie/pi-jev-browser               # from npm
 ```
 
-Chromium downloads on the first `jev_run` if Playwright's cache does not already have a matching build (up to ~2 minutes, network required). Nothing is downloaded at pi startup. On Linux the system browser libraries remain an administrator-managed prerequisite; this package does not run sudo.
+Installing pulls in `playwright`, whose own install step downloads Chromium — roughly 150 MB, so the first install takes a moment. `ensureChromium()` covers the case where that step was skipped: the first `jev_run` runs `playwright install chromium` if no matching build is cached, bounded to two minutes. Nothing is downloaded at pi startup. On Linux the system browser libraries remain an administrator-managed prerequisite; this package never runs sudo.
 
 ## Configuration
 
