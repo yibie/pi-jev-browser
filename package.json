@@ -1,6 +1,6 @@
 {
   "name": "@yibie/pi-jev-browser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Isolated Playwright browser for pi, driven by Jev typed decisions through the TypeSafe API or the model pi already has configured.",
   "author": "yibie",
   "repository": {
@@ -22,7 +22,8 @@
   "pi": {
     "extensions": [
       "./extensions/jev-browser.ts"
-    ]
+    ],
+    "video": "https://raw.githubusercontent.com/yibie/pi-jev-browser/main/docs/demo.mp4"
   },
   "files": [
     "extensions",

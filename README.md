@@ -6,6 +6,8 @@ An isolated Playwright Chromium browser for pi, driven by [Jev](https://typesafe
 
 Jev does not see screenshots. The plugin hands it a structured DOM observation and one multiple-choice question per step, and Jev answers with a concrete operation plus a probability distribution over the offered options. That removes the screenshot round trip and the reasoning round trip from every browser step.
 
+**Demo:** [`docs/demo.mp4`](docs/demo.mp4) — a recorded run that pages to the next listing, opens the first book, and scrolls until the Product Information table is in view. 2× speed, 11 s, with the cursor and click indicators the plugin injects for recordings.
+
 **This is not a replacement for `agent_browser`.** It is the other trade: no login state, no extensions, no host environment, every step recorded with its probability, and a much cheaper fast loop. Use it for narrowly scoped goals on public pages. Use a profile-based browser tool when you need the user's session.
 
 ## Decision policies
