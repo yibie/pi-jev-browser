@@ -23,7 +23,7 @@
     "extensions": [
       "./extensions/jev-browser.ts"
     ],
-    "video": "https://raw.githubusercontent.com/yibie/pi-jev-browser/main/docs/demo.mp4"
+    "video": "https://cdn.jsdelivr.net/gh/yibie/pi-jev-browser@main/docs/demo.mp4"
   },
   "files": [
     "extensions",
