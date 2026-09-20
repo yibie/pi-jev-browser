@@ -6,6 +6,7 @@ import {
 	StaleObservationError,
 } from "./jev-browser.ts";
 import type { JevPolicy } from "./jev-model.ts";
+import { verificationGate } from "./gate.ts";
 
 export interface RunInput {
 	goal: string;
@@ -40,7 +41,18 @@ export interface ActionHistory {
 export interface RunMemory {
 	goal: string;
 	actions: ActionHistory[];
+	/** Observation keys this run has already visited, newest last. */
+	states?: string[];
 }
+
+/**
+ * A cycle needs a repeat: a loop that returns to a page it already visited three
+ * times in a row is not making progress, while a sweep over several items keeps
+ * finding states it has never seen.
+ */
+const MAX_STATE_REVISITS = 3;
+/** Bounded, so a long run forgets the oldest states instead of growing forever. */
+const MAX_VISITED_STATES = 12;
 
 export async function runJev(
 	input: RunInput,
@@ -81,8 +93,10 @@ export async function runJev(
 	if (memory.goal !== input.goal) {
 		memory.goal = input.goal;
 		memory.actions = [];
+		memory.states = [];
 	}
 	let executed = 0;
+	let revisits = 0;
 	let stage = "observation";
 	const textCache = new Map<string, string>();
 	const started = performance.now();
@@ -106,6 +120,22 @@ export async function runJev(
 			const page = options.page();
 			const snapshot = await observe(page, signal);
 			try {
+				// Mechanical refusal, before the policy can choose to click through it.
+				const gate = verificationGate(snapshot.data);
+				if (gate) {
+					await options.onStep?.({
+						step,
+						operation: "REVIEW",
+						target: gate.target,
+						status: "decision",
+						reason: "verification_gate",
+						latencyMs: 0,
+					});
+					return finish(
+						"needs_review",
+						`The page presents a human-verification gate (${JSON.stringify(gate.phrase)}, control ${JSON.stringify(gate.target)}). This loop does not complete verification challenges; hand this step to the user.`,
+					);
+				}
 				const decisionStarted = performance.now();
 				stage = "evaluation";
 				const decision = await policy.choose(
@@ -221,12 +251,12 @@ export async function runJev(
 				stage = "post_action_observation";
 				const after = await observe(options.page(), signal);
 				try {
+					const stateKey = JSON.stringify(after.data);
 					memory.actions.push({
 						action: decision.target?.label ?? decision.operation,
 						kind: decision.operation,
 						text,
-						page_changed:
-							JSON.stringify(after.data) !== JSON.stringify(snapshot.data),
+						page_changed: stateKey !== JSON.stringify(snapshot.data),
 					});
 					memory.actions.splice(0, Math.max(0, memory.actions.length - 10));
 					const recent = memory.actions
@@ -236,6 +266,21 @@ export async function runJev(
 						return finish(
 							"blocked",
 							"Three actions produced no observable progress.",
+						);
+					// That check only sees consecutive actions that change nothing, so a longer
+					// cycle — click A, click B, click A, … — passes it every time: each action
+					// does change the page, it just returns to a page already seen.
+					const visited = (memory.states ??= []);
+					if (visited.includes(stateKey)) revisits++;
+					else {
+						revisits = 0;
+						visited.push(stateKey);
+						if (visited.length > MAX_VISITED_STATES) visited.shift();
+					}
+					if (revisits >= MAX_STATE_REVISITS)
+						return finish(
+							"blocked",
+							`The run came back to a page state it had already visited ${revisits} times in a row without meeting anything new. The goal does not look reachable through the offered actions; continue with jev_actions if it is still worth pursuing.`,
 						);
 				} finally {
 					await after.dispose().catch(() => undefined);
